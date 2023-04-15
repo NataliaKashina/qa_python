@@ -1,7 +1,8 @@
 import pytest
-
 from main import BooksCollector
 
+# класс TestBooksCollector объединяет набор тестов, которыми мы покрываем наше приложение BooksCollector
+# обязательно указывать префикс Test
 class TestBooksCollector:
 
     def test_add_new_book_add_two_books(self):
@@ -11,88 +12,72 @@ class TestBooksCollector:
         assert len(collector.get_books_rating()) == 2
 
     # напиши свои тесты ниже
-    # чтобы тесты были независимыми в каждом из них создавай отдельный экземпляр класса BooksCollector()
-
-    def test_add_new_book_add_one_book_success(self):  # 1.Проверка добавления книг.
+    def test_add_new_book(self):
         collector = BooksCollector()
         collector.add_new_book('Война и мир')
-        for key, value in collector.books_rating.items():
-            assert (key, value) == ('Война и мир', 1)
-
-    def test_add_new_book_add_the_same_books_impossible(self):  # 2.Нельзя добавить одну книгу дважды
+        assert collector.get_book_rating('Война и мир') == 1
+    def test_add_new_book_adding_the_same_books(self):
         collector = BooksCollector()
         collector.add_new_book('Война и мир')
         collector.add_new_book('Война и мир')
         assert len(collector.books_rating.keys()) == 1
 
-    @pytest.fixture # Фикстура создает словарь с одной книгой и рейтингом 1
-    def books(self):
+    def test_set_book_rating_for_nonexistent_book(self):
         books = BooksCollector()
-        books.books_rating['Тихий Дон'] = 1
-        return books
+        books.set_book_rating("The Great Gatsby", 8)
+        assert books.get_book_rating("The Great Gatsby") == None
 
-    def test_set_book_rating_for_not_added_book_impossible(self, books):  # 3.Нельзя выставить рейтинг книге, которой нет в списке
-        books.set_book_rating('Му-Му', 5)  # пытаемся выставить рейтинг книге, которой нет в словаре
-        assert books.books_rating == {'Тихий Дон': 1}  # проверяем, что словарь не изменился в пред шаге
+    @pytest.mark.parametrize('name, rating', [['Book1', 11], ['Book2', 15]])
+    def test_set_book_rating_greater_than_ten(self, name, rating):
+        books = BooksCollector()
+        books.books_rating = {'Book1': 5, 'Book2': 8}
+        books.set_book_rating(name, rating)
+        assert books.get_book_rating(name) != rating
 
-    def test_set_book_rating_value_less_than_one_impossible(self, books):  # 4.Нельзя выставить рейтинг меньше 1
-        books.set_book_rating('Тихий Дон', 0)  # Пробуем выставить 0 рейтинг книге из словаря
-        assert books.books_rating == {'Тихий Дон': 1}  # проверяем, что словарь не изменился в пред шаге
+    def test_set_book_rating_zero_value(self):
+        collector = BooksCollector()
+        collector.books_rating = {'Book1': 5}
+        collector.set_book_rating('Book1', 0)
+        assert collector.books_rating['Book1'] == 5
 
-    def test_set_book_rating_value_more_than_ten_impossible(self, books):  # 5.Нельзя выставить рейтинг больше 10
-        books.set_book_rating('Тихий Дон', 11)  # Пробуем выставить рейтинг = 11 книге из словаря
-        assert books.books_rating == {'Тихий Дон': 1}  # проверяем, что словарь не изменился в пред шаге
+    def test_get_book_rating_by_name(self):
+        books = BooksCollector()
+        books.add_new_book('Война и Мир')
+        books.set_book_rating('Война и Мир', 8)
+        assert books.get_book_rating('Война и Мир') == 8
 
-    @pytest.fixture  # Фикстура создает словарь с несколькими книгами с разным рейтингом
-    def several_books(self):
-        several_books = BooksCollector()
-        several_books.books_rating = {
-            'Тихий Дон': 1,
-            'Колобок': 5,
-            'Красная Шапочка': 5,
-            'Мцыри': 3,
-            'Левша': 7,
-            'Три товарища': 10
-        }
-        several_books.expected_books_rating = {  # Переменная для проверки верного вывода словаря в тесте номер 8
-            'Тихий Дон': 1,
-            'Колобок': 5,
-            'Красная Шапочка': 5,
-            'Мцыри': 3,
-            'Левша': 7,
-            'Три товарища': 10
-        }
-        return several_books
+    def test_get_books_with_specific_rating_multiple_books(self, books_collector):
+        assert books_collector.get_books_with_specific_rating(8) == ['Война и мир', 'Мастер и Маргарита']
 
-    def test_get_books_rating_by_name_get_correct_rating(self, several_books):  # 6.Проверяем, что возвращается верный рейтинг по названию книги
-        assert several_books.get_book_rating('Тихий Дон') == 1
-        assert several_books.get_book_rating('Три товарища') == 10
-        assert several_books.get_book_rating('Война и мир') is None
+    def test_get_books_with_specific_rating_no_books(self, books_collector):
+        assert books_collector.get_books_with_specific_rating(7) == []
 
-    def test_get_books_with_specific_rating_by_rating_get_correct_books(self, several_books):  # 7.Проверяем, что возвращаются верные книги по вводимому рейтингу
-        assert several_books.get_books_with_specific_rating(5) == ['Колобок', 'Красная Шапочка']
-        assert several_books.get_books_with_specific_rating(7) == ['Левша']
+    def test_get_books_rating(self, books_collector):
+        expected_book_rating = {'Война и мир': 8, 'Мастер и Маргарита': 8, 'Преступление и наказание': 9}
+        assert books_collector.get_books_rating() == expected_book_rating
 
-    def test_get_books_rating_get_books_dictionary(self, several_books):  # 8.Проверяем, что возвращается словарь с книгами верно
-        assert several_books.get_books_rating() == several_books.expected_books_rating
+    def test_add_book_in_favorites(self, books_collector):
+        books_collector.add_book_in_favorites('Война и мир')
+        assert 'Война и мир' in books_collector.favorites
+        books_collector.add_book_in_favorites('Новая книга')
+        assert 'Новая книга' not in books_collector.favorites
 
-    def test_add_book_in_favorites_via_name_success(self, several_books):  # 9.Проверяем что книги попадают в изранное
-        several_books.add_book_in_favorites('Тихий Дон')
-        assert 'Тихий Дон' in several_books.favorites
-        several_books.add_book_in_favorites('Новая книга')
-        assert 'Новая книга' not in several_books.favorites
+    def test_delete_book_from_favorites(self):
+        collector = BooksCollector()
+        collector.add_new_book('Война и мир')
+        collector.add_new_book('Преступление и наказание')
+        collector.add_new_book('Анна Каренина')
+        collector.add_book_in_favorites('Война и мир')
+        collector.add_book_in_favorites('Преступление и наказание')
+        assert collector.get_list_of_favorites_books() == ['Война и мир', 'Преступление и наказание']
+        collector.delete_book_from_favorites('Война и мир')
+        assert collector.get_list_of_favorites_books() == ['Преступление и наказание']
 
-    @pytest.fixture # Фикстура создает словарь избранных книг
-    def favorite_books(self):
-        favorite_books = BooksCollector()
-        favorite_books.favorites = ['Book1', 'Book2', 'Book3']
-        return favorite_books
-
-    def test_delete_book_from_favorites_via_name_success(self, favorite_books): # 10.Проверяем удаление из избраного
-        favorite_books.delete_book_from_favorites('Book2')
-        assert favorite_books.favorites == ['Book1', 'Book3']
-        favorite_books.delete_book_from_favorites('Book4')
-        assert favorite_books.favorites == ['Book1', 'Book3']
-
-    def test_get_list_of_favorites_books(self, favorite_books): # 11.Проверяем что верно возвращается словарь Избранного
-        assert favorite_books.get_list_of_favorites_books() == ['Book1', 'Book2', 'Book3']
+    def test_get_list_of_favorites_books(self):
+        books = BooksCollector()
+        books.add_new_book('Book1')
+        books.add_new_book('Book2')
+        books.add_new_book('Book3')
+        books.add_book_in_favorites('Book1')
+        books.add_book_in_favorites('Book3')
+        assert books.get_list_of_favorites_books() == ['Book1', 'Book3']
