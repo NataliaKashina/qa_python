@@ -16,29 +16,33 @@ class TestBooksCollector:
         collector = BooksCollector()
         collector.add_new_book('Война и мир')
         assert collector.get_book_rating('Война и мир') == 1
+
     def test_add_new_book_adding_the_same_books(self):
         collector = BooksCollector()
         collector.add_new_book('Война и мир')
         collector.add_new_book('Война и мир')
-        assert len(collector.books_rating.keys()) == 1
+        assert collector.get_books_rating() == {'Война и мир': 1}
 
     def test_set_book_rating_for_nonexistent_book(self):
         books = BooksCollector()
         books.set_book_rating("The Great Gatsby", 8)
-        assert books.get_book_rating("The Great Gatsby") == None
+        assert books.get_book_rating("The Great Gatsby") is None
 
     @pytest.mark.parametrize('name, rating', [['Book1', 11], ['Book2', 15]])
     def test_set_book_rating_greater_than_ten(self, name, rating):
         books = BooksCollector()
-        books.books_rating = {'Book1': 5, 'Book2': 8}
+        books.add_new_book('Book1')
+        books.add_new_book('Book2')
+        books.set_book_rating('Book1', 5)
+        books.set_book_rating('Book2', 8)
         books.set_book_rating(name, rating)
         assert books.get_book_rating(name) != rating
 
     def test_set_book_rating_zero_value(self):
         collector = BooksCollector()
-        collector.books_rating = {'Book1': 5}
+        collector.add_new_book('Book1')
         collector.set_book_rating('Book1', 0)
-        assert collector.books_rating['Book1'] == 5
+        assert not collector.get_book_rating('Book1') == 0
 
     def test_get_book_rating_by_name(self):
         books = BooksCollector()
@@ -58,9 +62,9 @@ class TestBooksCollector:
 
     def test_add_book_in_favorites(self, books_collector):
         books_collector.add_book_in_favorites('Война и мир')
-        assert 'Война и мир' in books_collector.favorites
+        assert 'Война и мир' in books_collector.get_list_of_favorites_books()
         books_collector.add_book_in_favorites('Новая книга')
-        assert 'Новая книга' not in books_collector.favorites
+        assert 'Новая книга' not in books_collector.get_list_of_favorites_books()
 
     def test_delete_book_from_favorites(self):
         collector = BooksCollector()
